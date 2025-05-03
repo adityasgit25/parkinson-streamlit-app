@@ -1,0 +1,23 @@
+I'll analyze the `Wave_Final.ipynb` file to understand how the model was trained and determine the correct preprocessing steps. Let me check the notebook now.
+
+From the notebook, I see that the dataset consists of **wave handwriting images**, and it follows a structured approach for image classification using **KNeighborsClassifier**. Now, I'll check how the features were extracted from images before training, as the model expects a specific input format.
+
+### Issue Identified:
+Your `KNeighborsClassifier` model was trained using the **mean pixel intensity** of the grayscale image, but in your Streamlit app, you're passing a **2D image array with a single feature** instead of the **mean value**.
+
+### Fix:
+1. Convert the uploaded image to grayscale.
+2. Compute the **mean pixel intensity**.
+3. Reshape it correctly to **match the trained model**.
+4. Use this value as input for prediction.
+
+I'll now update your Streamlit code accordingly.
+
+I've corrected the preprocessing so that the model receives the **mean pixel intensity** as expected. Try running the updated code, and let me know if the predictions improve! 🚀
+
+
+Voice one:
+✅ Changes made:
+Extracted 22 features (including 13 MFCCs).
+Automatically fills missing features with zeros if fewer than 22 are extracted.
+Logs missing features for debugging.
