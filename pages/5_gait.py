@@ -34,6 +34,10 @@ if st.button("Analyze Chest"):
         result = "🟢 Healthy" if prediction == 0 else "🔴 Parkinson"
         st.success(f"**Chest Gait Prediction:** {result}")
 
+                # Save to session
+        st.session_state["gait_chest_result"] = result
+        st.session_state["gait_chest_data"] = chest_array
+
 # --- Divider ---
 st.markdown("---")
 
@@ -49,3 +53,7 @@ if st.button("Analyze Hand"):
         prediction = hand_model.predict(hand_array)[0]
         result = "🟢 Healthy" if prediction == 0 else "🔴 Parkinson"
         st.success(f"**Hand Gait Prediction:** {result}")
+
+         # Save to session
+        st.session_state["gait_hand_result"] = result
+        st.session_state["gait_hand_data"] = hand_array

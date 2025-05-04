@@ -8,6 +8,7 @@ from keras.preprocessing import image
 # from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
+from io import BytesIO
 
 
 
@@ -57,3 +58,14 @@ if uploaded_file is not None:
     result = predict_parkinson(uploaded_file)
     st.write("Prediction Result:")
     st.success(result)
+
+
+     # Save the result in session state
+    st.session_state["wave_result"] = result
+
+    # Save the image in session state as bytes for later report generation
+    uploaded_file.seek(0)  # Reset the file pointer to the start
+    image_bytes = uploaded_file.read()
+    st.session_state["wave_image_bytes"] = image_bytes
+
+    st.info("✅ Wave result and image saved for report.")

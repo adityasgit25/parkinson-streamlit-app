@@ -34,6 +34,10 @@ if st.button("🔍 Predict"):
             input_array = np.array(values).reshape(1, -1)
             prediction = model.predict(input_array)[0]
 
+            # Save the input data and prediction result to session state
+            st.session_state["ecg_input_data"] = input_data
+            st.session_state["ecg_result"] = "Healthy" if prediction == 0 else "Parkinson's Disease"
+
             if prediction == 0:
                 st.success("✅ The person is **Healthy**.")
             else:

@@ -6,6 +6,7 @@ import joblib
 from keras.preprocessing import image
 import numpy as np
 from PIL import Image
+from io import BytesIO
 
 
 
@@ -56,3 +57,13 @@ if uploaded_file is not None:
     result = predict_parkinson(uploaded_file)
     st.write("Prediction Result:")
     st.success(result)
+
+    # Store result in session state
+    st.session_state["spiral_result"] = result
+
+    # Save image bytes for report
+    uploaded_file.seek(0)  # Reset file pointer
+    image_bytes = uploaded_file.read()
+    st.session_state["spiral_image_bytes"] = image_bytes
+
+    st.info("✅ Spiral result and image saved for report.")

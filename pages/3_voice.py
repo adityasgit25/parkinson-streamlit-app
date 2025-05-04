@@ -507,12 +507,17 @@ if uploaded_file is not None:
         # Make prediction
         prediction = model.predict(features_scaled)
 
+
         # Display result
         st.subheader("Prediction Result")
         if prediction[0] == 0:
             st.success("The person does not have Parkinson's Disease.")
+             # Store prediction result in session state
+            st.session_state["voice_result"] = "The person does not have Parkinson's Disease."
         else:
             st.error("The person has Parkinson's Disease.")
+            # Store prediction result in session state
+            st.session_state["voice_result"] = "The person has Parkinson's Disease."
 
         # Optional: Display extracted features
         with st.expander("View Extracted Features"):
@@ -527,3 +532,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Please upload a WAV file to proceed.")
+
+# Show the session state prediction result
+if 'prediction_result' in st.session_state:
+    st.write(f"Stored prediction result: {st.session_state.prediction_result}")
