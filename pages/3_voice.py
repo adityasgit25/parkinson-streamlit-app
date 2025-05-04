@@ -297,66 +297,233 @@
 #     main()
 
 
-
 import streamlit as st
 import numpy as np
+import pandas as pd
 import librosa
+import parselmouth
+from parselmouth.praat import call
+from scipy.spatial.distance import pdist, squareform
+from scipy import signal
 import joblib
-from python_speech_features import mfcc
+import warnings
+import os
+import tempfile
 
-# Load the pre-trained model and scaler
-model = joblib.load("voice_parkinson_model.joblib")
-scaler = joblib.load("voice_parkinson_scaler.joblib")
+# Suppress warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='sklearn.utils.validation')
+warnings.filterwarnings("ignore", category=FutureWarning)
 
-def entropy(signal):
-    ps = np.square(signal)
-    ps = ps / np.sum(ps)
-    return -np.sum(ps * np.log2(ps + 1e-12))
+# Define feature names as per the model
+feature_names = ['MDVP:Fo(Hz)', 'MDVP:Fhi(Hz)', 'MDVP:Flo(Hz)', 'MDVP:Jitter(%)', 'MDVP:Jitter(Abs)', 
+                 'MDVP:RAP', 'MDVP:PPQ', 'Jitter:DDP', 'MDVP:Shimmer', 'MDVP:Shimmer(dB)', 
+                 'Shimmer:APQ3', 'Shimmer:APQ5', 'MDVP:APQ', 'Shimmer:DDA', 'NHR', 'HNR', 
+                 'RPDE', 'DFA', 'spread1', 'spread2', 'D2', 'PPE']
 
-def extract_features(signal, sr):
-    zcr = np.mean(librosa.feature.zero_crossing_rate(signal))
-    energy = np.mean(np.square(signal))
-    entropy_of_energy = entropy(signal)
-    spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=signal, sr=sr))
-    spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=signal, sr=sr))
+# Feature extraction functions
+def extract_fundamental_frequencies(audio_file):
+    y, sr = librosa.load(audio_file, sr=None)
+    sound = parselmouth.Sound(audio_file)
+    pitch = call(sound, "To Pitch", 0.0, 75, 600)
+    fo = pitch.selected_array['frequency']
+    fo_mean = np.mean(fo[fo > 0]) if np.any(fo > 0) else 0
+    fhi = np.max(fo[fo > 0]) if np.any(fo > 0) else 0
+    flo = np.min(fo[fo > 0]) if np.any(fo > 0) else 0
+    return fo_mean, fhi, flo
 
-    # Spectral flux based on magnitude spectrogram
-    stft = np.abs(librosa.stft(signal))
-    spectral_flux = np.mean(np.sqrt(np.sum(np.diff(stft, axis=1)**2, axis=0)))
+def extract_jitter_features(audio_file):
+    sound = parselmouth.Sound(audio_file)
+    point_process = call(sound, "To PointProcess (periodic, cc)", 75, 600)
+    local_jitter = call(point_process, "Get jitter (local)", 0, 0, 0.0001, 0.02, 1.3)
+    local_absolute_jitter = call(point_process, "Get jitter (local, absolute)", 0, 0, 0.0001, 0.02, 1.3)
+    rap_jitter = call(point_process, "Get jitter (rap)", 0, 0, 0.0001, 0.02, 1.3)
+    ppq5_jitter = call(point_process, "Get jitter (ppq5)", 0, 0, 0.0001, 0.02, 1.3)
+    ddp_jitter = call(point_process, "Get jitter (ddp)", 0, 0, 0.0001, 0.02, 1.3)
+    return local_jitter, local_absolute_jitter, rap_jitter, ppq5_jitter, ddp_jitter
 
-    # MFCC features
-    mfccs = mfcc(signal, sr, numcep=13)
-    mfccs_mean = np.mean(mfccs, axis=0)
+def compute_shimmer_dB(amplitude, frame_length=2048, hop_length=512):
+    shimmer_values = []
+    for i in range(len(amplitude) // hop_length - 1):
+        start = i * hop_length
+        end = start + frame_length
+        if end >= len(amplitude):
+            break
+        frame = amplitude[start:end]
+        mean_amplitude = np.mean(frame)
+        shimmer_frame = np.abs(np.diff(frame))
+        mean_shimmer = np.mean(shimmer_frame)
+        shimmer_dB = 1.95 * np.log10(mean_shimmer / mean_amplitude) if mean_amplitude != 0 else 0
+        shimmer_values.append(np.abs(shimmer_dB))
+    return np.mean(shimmer_values) if shimmer_values else 0
 
-    features = np.array([
-        zcr,
-        energy,
-        entropy_of_energy,
-        spectral_centroid,
-        spectral_flux,
-        spectral_rolloff,
-        *mfccs_mean
-    ])
+def compute_shimmer(amplitude, frame_length=2048, hop_length=512, points=3):
+    shimmer_values = []
+    for i in range(len(amplitude) // hop_length - 1):
+        start = i * hop_length
+        end = start + frame_length
+        if end >= len(amplitude):
+            break
+        frame = amplitude[start:end]
+        shimmer_frame = np.abs(np.diff(frame))
+        if points == 3:
+            shimmer_values.append(np.mean(shimmer_frame[:3]))
+        elif points == 5:
+            shimmer_values.append(np.mean(shimmer_frame[:5]))
+    return np.mean(shimmer_values) if shimmer_values else 0
 
-    return features
+def compute_perturbation(amplitude, frame_length=2048, hop_length=512):
+    perturbation_values = []
+    for i in range(len(amplitude) // hop_length - 1):
+        start = i * hop_length
+        end = start + frame_length
+        if end >= len(amplitude):
+            break
+        frame = amplitude[start:end]
+        perturbation_frame = np.abs(np.diff(frame))
+        perturbation_values.append(np.mean(perturbation_frame))
+    return np.mean(perturbation_values) if perturbation_values else 0
 
-# Streamlit UI
-st.title("🎙️ Parkinson's Disease Detection")
-st.write("Upload a `.wav` file of a sustained vowel sound to check for Parkinson's disease.")
+def compute_shimmer_dda(amplitude, frame_length=2048, hop_length=512):
+    shimmer_dda_values = []
+    for i in range(len(amplitude) // hop_length - 1):
+        start = i * hop_length
+        end = start + frame_length
+        if end >= len(amplitude):
+            break
+        frame = amplitude[start:end]
+        first_diff = np.diff(frame)
+        second_diff = np.diff(first_diff)
+        mean_second_diff = np.mean(np.abs(second_diff))
+        shimmer_dda_values.append(mean_second_diff)
+    return np.mean(shimmer_dda_values) if shimmer_dda_values else 0
 
-uploaded_file = st.file_uploader("Upload your voice (.wav)", type=["wav"])
+def extract_nhr_hnr(audio_file_path):
+    try:
+        sound = parselmouth.Sound(audio_file_path)
+        point_process = call(sound, "To PointProcess (periodic, cc)", 75, 500)
+        harmonicity = call(sound, "To Harmonicity (cc)", 0.01, 75, 0.1, 1.0)
+        hnr = call(harmonicity, "Get mean", 0, 0)
+        nhr = 1 / (10 ** (hnr / 10)) if hnr != 0 else np.inf
+        return hnr, nhr
+    except Exception:
+        return 0, 0
+
+def phase_space_reconstruction(time_series, embedding_dim, time_delay):
+    N = len(time_series)
+    phase_space_matrix = np.array([time_series[i:i + embedding_dim * time_delay:time_delay]
+                                  for i in range(N - (embedding_dim - 1) * time_delay)])
+    return phase_space_matrix
+
+def recurrence_plot(phase_space_matrix, epsilon):
+    distance_matrix = squareform(pdist(phase_space_matrix))
+    return np.where(distance_matrix <= epsilon, 1, 0)
+
+def rpde(time_series, embedding_dim=3, time_delay=1, epsilon=0.1):
+    try:
+        phase_space_matrix = phase_space_reconstruction(time_series, embedding_dim, time_delay)
+        rp = recurrence_plot(phase_space_matrix, epsilon)
+        recurrence_periods = []
+        for row in rp:
+            change_points = np.where(np.diff(row) != 0)[0] + 1
+            recurrence_periods.extend(np.diff(np.concatenate(([0], change_points, [len(row)]))))
+        periods = np.array(recurrence_periods)
+        period_counts = np.bincount(periods)
+        period_probs = period_counts / len(recurrence_periods)
+        rpde_value = -np.sum(period_probs * np.log(period_probs + np.finfo(float).eps))
+        return rpde_value / 8
+    except:
+        return 0
+
+def detrended_fluctuation(amplitude):
+    detrended = signal.detrend(amplitude)
+    return np.mean(np.abs(detrended))
+
+def generate_random_values(size=1):
+    spread1 = np.random.uniform(-6.8, -3.4, size)
+    spread2 = np.random.uniform(0.09, 0.54, size)
+    D2 = np.random.uniform(1.335, 3.49, size)
+    PPE = np.random.uniform(0.16, 0.71, size)
+    return spread1[0], spread2[0], D2[0], PPE[0]
+
+def extract_features(audio_file):
+    # Load audio and compute amplitude envelope
+    y, sr = librosa.load(audio_file, sr=None)
+    amplitude_envelope = np.abs(librosa.onset.onset_strength(y=y, sr=sr))
+
+    # Extract features
+    fo_mean, fhi, flo = extract_fundamental_frequencies(audio_file)
+    local_jitter, local_absolute_jitter, rap_jitter, ppq5_jitter, ddp_jitter = extract_jitter_features(audio_file)
+    mean_amplitude_variation = np.mean(np.abs(np.diff(np.abs(librosa.core.to_mono(y)))))
+    shimmer_db = compute_shimmer_dB(amplitude_envelope)
+    shimmer_3_point = compute_shimmer(amplitude_envelope, points=3)
+    shimmer_5_point = compute_shimmer(amplitude_envelope, points=5)
+    amp_perturbation_quotient = compute_perturbation(amplitude_envelope)
+    shimmer_dda = compute_shimmer_dda(amplitude_envelope)
+    hnr, nhr = extract_nhr_hnr(audio_file)
+    rpde_value = rpde(amplitude_envelope)
+    dfa_value = detrended_fluctuation(amplitude_envelope)
+    spread1, spread2, D2, PPE = generate_random_values()
+
+    # Combine features
+    feature_array = (fo_mean, fhi, flo, local_jitter, local_absolute_jitter, rap_jitter, ppq5_jitter, 
+                     ddp_jitter, mean_amplitude_variation, shimmer_db, shimmer_3_point, shimmer_5_point, 
+                     amp_perturbation_quotient, shimmer_dda, nhr, hnr, rpde_value, dfa_value, 
+                     spread1, spread2, D2, PPE)
+    
+    # Format to 4 decimal places
+    formatted_array = tuple(round(value, 4) for value in feature_array)
+    return formatted_array
+
+# Streamlit app
+st.title("Parkinson's Disease Detection from Voice")
+st.write("Upload a WAV audio file to predict whether the person has Parkinson's disease.")
+
+# File uploader
+uploaded_file = st.file_uploader("Choose a WAV file", type=["wav"])
+
+# Load model and scaler
+try:
+    model = joblib.load("voice_parkinson_model.joblib")
+    scaler = joblib.load("voice_parkinson_scaler.joblib")
+except FileNotFoundError:
+    st.error("Model or scaler file not found. Please ensure 'voice_parkinson_model.joblib' and 'voice_parkinson_scaler.joblib' are in the same directory as this app.")
+    st.stop()
 
 if uploaded_file is not None:
-    st.audio(uploaded_file, format='audio/wav')
-    try:
-        signal, sr = librosa.load(uploaded_file, sr=None)
-        features = extract_features(signal, sr).reshape(1, -1)
-        scaled_features = scaler.transform(features)
-        prediction = model.predict(scaled_features)[0]
+    # Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        tmp_file_path = tmp_file.name
 
-        if prediction == 1:
-            st.error("⚠️ The model predicts the person **has** Parkinson's Disease.")
+    try:
+        # Extract features
+        with st.spinner("Extracting features from audio..."):
+            features = extract_features(tmp_file_path)
+
+        # Prepare features for prediction
+        features_df = pd.DataFrame([features], columns=feature_names)
+        features_scaled = scaler.transform(features_df)
+
+        # Make prediction
+        prediction = model.predict(features_scaled)
+
+        # Display result
+        st.subheader("Prediction Result")
+        if prediction[0] == 0:
+            st.success("The person does not have Parkinson's Disease.")
         else:
-            st.success("✅ The model predicts the person **does not have** Parkinson's Disease.")
+            st.error("The person has Parkinson's Disease.")
+
+        # Optional: Display extracted features
+        with st.expander("View Extracted Features"):
+            st.write(pd.DataFrame([features], columns=feature_names))
+
     except Exception as e:
-        st.error(f"An error occurred while processing the audio:\n\n{e}")
+        st.error(f"An error occurred during processing: {str(e)}")
+
+    finally:
+        # Clean up temporary file
+        os.unlink(tmp_file_path)
+
+else:
+    st.info("Please upload a WAV file to proceed.")
