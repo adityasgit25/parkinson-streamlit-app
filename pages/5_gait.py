@@ -63,6 +63,7 @@ import streamlit as st
 import joblib
 import numpy as np
 from PIL import Image
+import io
 
 # Load models
 chest_model = joblib.load("AB_Gait_Chest.joblib")
@@ -77,6 +78,14 @@ def parse_input(input_str):
         return np.array(values).reshape(1, -1), None
     except ValueError:
         return None, "Please enter only numeric values separated by commas."
+    
+
+# Function to convert image to bytes
+def image_to_bytes(image):
+    byte_arr = io.BytesIO()
+    image.save(byte_arr, format="PNG")  # You can change the format if needed (e.g., "JPEG")
+    byte_arr.seek(0)
+    return byte_arr.read()
 
 # Initialize session state variables if they don't exist
 if "gait_chest_result" not in st.session_state:
@@ -106,8 +115,10 @@ left_hand_img = st.file_uploader("Choose an image of left hand gait analysis", t
 if left_hand_img is not None:
     image = Image.open(left_hand_img)
     st.image(image, caption="Uploaded Left Hand Plot", width=300)
-    # Store the image in session state
-    st.session_state["left_hand_image"] = left_hand_img
+
+    # Convert image to bytes and store in session state
+    left_hand_image_bytes = image_to_bytes(image)
+    st.session_state["left_hand_image_bytes"] = left_hand_image_bytes
 
 if st.button("Analyze Left Hand"):
     chest_array, error = parse_input(chest_input)
@@ -135,8 +146,11 @@ right_hand_img = st.file_uploader("Choose an image of right hand gait analysis",
 if right_hand_img is not None:
     image = Image.open(right_hand_img)
     st.image(image, caption="Uploaded Right Hand Image", width=300)
-    # Store the image in session state
-    st.session_state["right_hand_image"] = right_hand_img
+    
+    # Convert image to bytes and store in session state
+    right_hand_image_bytes = image_to_bytes(image)
+    st.session_state["right_hand_image_bytes"] = right_hand_image_bytes
+
 
 if st.button("Analyze Right Hand"):
     hand_array, error = parse_input(hand_input)
