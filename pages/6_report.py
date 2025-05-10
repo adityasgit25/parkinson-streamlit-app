@@ -16,10 +16,11 @@ st.set_page_config(page_title="Final Report", page_icon="📄")
 
 st.title("📄 Parkinson's Disease - Final Report")
 
-# Utility to decode session image bytes
-def get_image_from_session():
-    if "spiral_image_bytes" in st.session_state:
-        return Image.open(BytesIO(st.session_state["spiral_image_bytes"]))
+
+# General utility to decode any session image bytes
+def get_image_from_session(key):
+    if key in st.session_state:
+        return Image.open(BytesIO(st.session_state[key]))
     return None
 
 # Utility to decode session image bytes for wave image
@@ -44,16 +45,21 @@ patient_info = {
 for key, val in patient_info.items():
     st.write(f"**{key}:** {val}")
 
-# Display Test Results
-st.subheader("🧪 Test Results Summary")
-test_names = ["Spiral", "Wave", "Voice", "ECG", "Gait (Chest)", "Gait (Hand)"]
-for test in test_names:
-    key = test.lower().replace(" ", "_").replace("(", "").replace(")", "") + "_result"
+test_display_mapping = {
+    "Spiral": "spiral_result",
+    "Wave": "wave_result",
+    "Voice": "voice_result",
+    "ECG": "ecg_result",
+    "Gait (Left Hand)": "gait_chest_result",  # internally still saved as gait_chest_result
+    "Gait (Right Hand)": "gait_hand_result",  # internally still saved as gait_hand_result
+}
+
+for test, key in test_display_mapping.items():
     result = st.session_state.get(key, "Not Available")
     st.write(f"**{test} Test Result:** {result}")
 
 # Show spiral image if available
-spiral_img = get_image_from_session()
+spiral_img = get_image_from_session("spiral_image_bytes")
 if spiral_img:
     st.subheader("🌀 Spiral Drawing")
     st.image(spiral_img, caption="Uploaded Spiral Drawing", use_column_width=True)
@@ -64,33 +70,63 @@ if wave_img:
     st.subheader("🌊 Wave Drawing")
     st.image(wave_img, caption="Uploaded Wave Drawing", use_column_width=True)
 
+
+# Show left hand gait image if available
+left_hand_img = get_image_from_session("left_hand_image_bytes")
+if left_hand_img:
+    st.subheader("👈 Left Hand Gait Analysis")
+    st.image(left_hand_img, caption="Left Hand Gait Image", use_column_width=True)
+
+# Show right hand gait image if available
+right_hand_img = get_image_from_session("right_hand_image_bytes")
+if right_hand_img:
+    st.subheader("👉 Right Hand Gait Analysis")
+    st.image(right_hand_img, caption="Right Hand Gait Image", use_column_width=True)
+
+
 # Display ECG Test Result and Input Data
 st.subheader("🫀 ECG Test Results")
 ecg_result = st.session_state.get("ecg_result", "Not Available")
 ecg_data = st.session_state.get("ecg_input_data", "Not Available")
 
-# Display the result
-# st.write(f"**ECG Test Result:** {ecg_result}")
+st.write(f"**ECG Test Result:** {ecg_result}")
 
-# If ECG data is available, display the 15 values clearly
-if ecg_data != "Not Available":
+# If ECG data is available, display all values with parameter names
+if isinstance(ecg_data, dict):
     st.write("**ECG Data:**")
-    for i, value in enumerate(ecg_data[:15]):
-        st.write(f"{FEATURE_NAMES[i]}: {value}")
+    for key, value in ecg_data.items():
+        st.write(f"{key}: {value}")
 else:
     st.write("**ECG Data:** Not Available")
 
+# Show ECG images if available
+ecg_img1 = get_image_from_session("ecg_image1_bytes")
+ecg_img2 = get_image_from_session("ecg_image2_bytes")
+if ecg_img1 or ecg_img2:
+    st.subheader("ECG Images")
+    col1, col2 = st.columns(2)
+    with col1:
+        if ecg_img1:
+            st.image(ecg_img1, caption="ECG Image 1", use_column_width=True)
+    with col2:
+        if ecg_img2:
+            st.image(ecg_img2, caption="ECG Image 2", use_column_width=True)
+
 st.subheader("🏃 Gait Test Details")
 
-if "gait_chest_data" in st.session_state:
-    st.markdown("**Chest Sensor Data:**")
-    for i, value in enumerate(st.session_state["gait_chest_data"]):
+if st.session_state.get("gait_chest_data") is not None:
+    st.markdown("**Left Hand Gait Sensor Data:**")
+    for i, value in enumerate(st.session_state["gait_chest_data"][0]):
         st.write(f"Feature {i+1}: {value}")
+else:
+    st.warning("Left hand gait data is not available yet.")
 
-if "gait_hand_data" in st.session_state:
-    st.markdown("**Hand Sensor Data:**")
-    for i, value in enumerate(st.session_state["gait_hand_data"]):
+if st.session_state.get("gait_hand_data") is not None:
+    st.markdown("**Right Hand Gait Sensor Data:**")
+    for i, value in enumerate(st.session_state["gait_hand_data"][0]):
         st.write(f"Feature {i+1}: {value}")
+else:
+    st.warning("Right hand gait data is not available yet.")
 
 # --- PDF Generation ---
 st.subheader("📥 Export Report as PDF")
@@ -117,10 +153,9 @@ def generate_pdf():
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Test Results", ln=True)
     pdf.set_font("Arial", size=12)
-    for test in test_names:
-        result = st.session_state.get(f"{test.lower()}_result", "Not Available")
+    for test, key in test_display_mapping.items():
+        result = st.session_state.get(key, "Not Available")
         pdf.cell(0, 10, f"{test} Test: {result}", ln=True)
-    pdf.ln(5)
 
      # ECG Test Results
     ecg_result = st.session_state.get("ecg_result", "Not Available")
@@ -129,29 +164,51 @@ def generate_pdf():
     pdf.set_font("Arial", size=12)
     pdf.cell(0, 10, f"ECG Test Result: {ecg_result}", ln=True)
 
-    # Include 15 ECG input values in the report
-    ecg_data = st.session_state.get("ecg_data", "Not Available")
-    if ecg_data != "Not Available":
-        for i, value in enumerate(ecg_data[:15]):
-            pdf.cell(0, 10, f"{FEATURE_NAMES[i]}: {value}", ln=True)
+    # ECG Images
+    if ecg_img1:
+        pdf.ln(5)
+        img_path = "ecg_img1_temp.jpg"
+        ecg_img1.convert("RGB").save(img_path)
+        pdf.image(img_path, w=100)
+    if ecg_img2:
+        pdf.ln(5)
+        img_path = "ecg_img2_temp.jpg"
+        ecg_img2.convert("RGB").save(img_path)
+        pdf.image(img_path, w=100)
+
+    # Include all ECG input values in the report
+    ecg_data = st.session_state.get("ecg_input_data", "Not Available")
+    if isinstance(ecg_data, dict):
+        for key, value in ecg_data.items():
+            pdf.cell(0, 10, f"{key}: {value}", ln=True)
     else:
         pdf.cell(0, 10, "ECG Data: Not Available", ln=True)
     pdf.ln(5)
+
+    # Add predictions if available
+    
 
     # Gait Detailed Data
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Gait Test Details", ln=True)
     pdf.set_font("Arial", size=12)
 
+    left_result = st.session_state.get("gait_chest_result", "Not Available")
+    right_result = st.session_state.get("gait_hand_result", "Not Available")
+
+    pdf.cell(0, 10, f"Left Hand Gait Prediction: {left_result}", ln=True)
+    pdf.cell(0, 10, f"Right Hand Gait Prediction: {right_result}", ln=True)
+    pdf.ln(5)
+
     chest_data = st.session_state.get("gait_chest_data")
     if chest_data is not None:
-        pdf.cell(0, 10, "Chest Sensor Data:", ln=True)
+        pdf.cell(0, 10, "Left Hand Gait Sensor Data:", ln=True)
         for i, val in enumerate(chest_data):
             pdf.cell(0, 10, f"  Feature {i+1}: {val}", ln=True)
 
     hand_data = st.session_state.get("gait_hand_data")
     if hand_data is not None:
-        pdf.cell(0, 10, "Hand Sensor Data:", ln=True)
+        pdf.cell(0, 10, "Right Hand Gait Sensor Data:", ln=True)
         for i, val in enumerate(hand_data):
             pdf.cell(0, 10, f"  Feature {i+1}: {val}", ln=True)
 
@@ -173,6 +230,20 @@ def generate_pdf():
         img_path = "wave_temp.jpg"
         wave_img.save(img_path)
         pdf.image(img_path, w=100)
+    
+     # Add left hand gait image if available
+    if left_hand_img:
+        pdf.ln(5)
+        img_path = "left_hand_temp.jpg"
+        left_hand_img.convert("RGB").save(img_path)
+        pdf.image(img_path, w=100)
+
+    # Add right hand gait image if available
+    if right_hand_img:
+        pdf.ln(5)
+        img_path = "right_hand_temp.jpg"
+        right_hand_img.convert("RGB").save(img_path)
+        pdf.image(img_path, w=100)
 
     return pdf.output(dest="S").encode("latin1")
 
@@ -181,3 +252,7 @@ pdf_bytes = generate_pdf()
 b64 = base64.b64encode(pdf_bytes).decode()
 href = f'<a href="data:application/pdf;base64,{b64}" download="parkinson_report.pdf">📄 Download Report as PDF</a>'
 st.markdown(href, unsafe_allow_html=True)
+
+
+
+
