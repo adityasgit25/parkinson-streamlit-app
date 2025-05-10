@@ -9,4 +9,13 @@ scipy==1.14.1
 tensorflow==2.17.0
 xgboost==3.0.0
 python_speech_features
-numpy
+fpdf==1.7.2
+pandas
+opencv-python-headless
+scipy
+scikit-image
+catboost
+warnings
+os
+io
+
