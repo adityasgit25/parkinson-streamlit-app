@@ -4,6 +4,7 @@ from io import BytesIO
 from fpdf import FPDF
 import datetime
 import base64
+import pandas as pd 
 
 # Feature names (order matters)
 FEATURE_NAMES = [
@@ -83,6 +84,13 @@ if right_hand_img:
     st.subheader("👉 Right Hand Gait Analysis")
     st.image(right_hand_img, caption="Right Hand Gait Image", use_column_width=True)
 
+# Show voice features if available
+voice_features = st.session_state.get("voice_features")
+if isinstance(voice_features, dict) and voice_features:
+    st.subheader("Voice Features")
+    st.table(pd.DataFrame([voice_features]))
+else:
+    st.write("Voice features not available.")
 
 # Display ECG Test Result and Input Data
 st.subheader("🫀 ECG Test Results")
@@ -112,21 +120,21 @@ if ecg_img1 or ecg_img2:
         if ecg_img2:
             st.image(ecg_img2, caption="ECG Image 2", use_column_width=True)
 
-st.subheader("🏃 Gait Test Details")
+# st.subheader("🏃 Gait Test Details")
 
-if st.session_state.get("gait_chest_data") is not None:
-    st.markdown("**Left Hand Gait Sensor Data:**")
-    for i, value in enumerate(st.session_state["gait_chest_data"][0]):
-        st.write(f"Feature {i+1}: {value}")
-else:
-    st.warning("Left hand gait data is not available yet.")
+# if st.session_state.get("gait_chest_data") is not None:
+#     st.markdown("**Left Hand Gait Sensor Data:**")
+#     for i, value in enumerate(st.session_state["gait_chest_data"][0]):
+#         st.write(f"Feature {i+1}: {value}")
+# else:
+#     st.warning("Left hand gait data is not available yet.")
 
-if st.session_state.get("gait_hand_data") is not None:
-    st.markdown("**Right Hand Gait Sensor Data:**")
-    for i, value in enumerate(st.session_state["gait_hand_data"][0]):
-        st.write(f"Feature {i+1}: {value}")
-else:
-    st.warning("Right hand gait data is not available yet.")
+# if st.session_state.get("gait_hand_data") is not None:
+#     st.markdown("**Right Hand Gait Sensor Data:**")
+#     for i, value in enumerate(st.session_state["gait_hand_data"][0]):
+#         st.write(f"Feature {i+1}: {value}")
+# else:
+#     st.warning("Right hand gait data is not available yet.")
 
 # --- PDF Generation ---
 st.subheader("📥 Export Report as PDF")
@@ -156,6 +164,23 @@ def generate_pdf():
     for test, key in test_display_mapping.items():
         result = st.session_state.get(key, "Not Available")
         pdf.cell(0, 10, f"{test} Test: {result}", ln=True)
+
+        # Voice Test Results
+    voice_result = st.session_state.get("voice_result", "Not Available")
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Voice Test Results", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, f"Voice Test Result: {voice_result}", ln=True)
+
+    # Voice Features Table
+    voice_features = st.session_state.get("voice_features")
+    if isinstance(voice_features, dict) and voice_features:
+        pdf.cell(0, 10, "Voice Features:", ln=True)
+        for key, value in voice_features.items():
+            pdf.cell(0, 10, f"{key}: {value}", ln=True)
+    else:
+        pdf.cell(0, 10, "Voice features not available.", ln=True)
+    pdf.ln(5)
 
      # ECG Test Results
     ecg_result = st.session_state.get("ecg_result", "Not Available")
@@ -200,17 +225,17 @@ def generate_pdf():
     pdf.cell(0, 10, f"Right Hand Gait Prediction: {right_result}", ln=True)
     pdf.ln(5)
 
-    chest_data = st.session_state.get("gait_chest_data")
-    if chest_data is not None:
-        pdf.cell(0, 10, "Left Hand Gait Sensor Data:", ln=True)
-        for i, val in enumerate(chest_data):
-            pdf.cell(0, 10, f"  Feature {i+1}: {val}", ln=True)
+    # chest_data = st.session_state.get("gait_chest_data")
+    # if chest_data is not None:
+    #     pdf.cell(0, 10, "Left Hand Gait Sensor Data:", ln=True)
+    #     for i, val in enumerate(chest_data):
+    #         pdf.cell(0, 10, f"  Feature {i+1}: {val}", ln=True)
 
-    hand_data = st.session_state.get("gait_hand_data")
-    if hand_data is not None:
-        pdf.cell(0, 10, "Right Hand Gait Sensor Data:", ln=True)
-        for i, val in enumerate(hand_data):
-            pdf.cell(0, 10, f"  Feature {i+1}: {val}", ln=True)
+    # hand_data = st.session_state.get("gait_hand_data")
+    # if hand_data is not None:
+    #     pdf.cell(0, 10, "Right Hand Gait Sensor Data:", ln=True)
+    #     for i, val in enumerate(hand_data):
+    #         pdf.cell(0, 10, f"  Feature {i+1}: {val}", ln=True)
 
 
     # Date
@@ -221,14 +246,14 @@ def generate_pdf():
     if spiral_img:
         pdf.ln(5)
         img_path = "spiral_temp.jpg"
-        spiral_img.save(img_path)
+        spiral_img.convert("RGB").save(img_path)
         pdf.image(img_path, w=100)
 
     # Wave image for PDF
     if wave_img:
         pdf.ln(5)
         img_path = "wave_temp.jpg"
-        wave_img.save(img_path)
+        wave_img.convert("RGB").save(img_path)
         pdf.image(img_path, w=100)
     
      # Add left hand gait image if available
