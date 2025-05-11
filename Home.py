@@ -1212,6 +1212,7 @@ with col1:
         <h5 style="color: #64B5F6;">Dr. Rakesh Kumar N</h5>
         <p>BAMS, MD(Dravyaguna)<br>
         📞 +91 9611206680<br>
+        Website: https://tinyurl.com/rsv7b7cz <br>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1221,6 +1222,7 @@ with col2:
         <h5 style="color: #64B5F6;">Dr. Zankhana M Buch</h5>
         <p>BAMS, MD(Kayachikitsa)<br>
         📞 +91 9611206680<br>
+        Website: https://tinyurl.com/rsv7b7cz <br>
     </div>
     """, unsafe_allow_html=True)
 

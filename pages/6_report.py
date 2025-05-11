@@ -142,12 +142,24 @@ st.subheader("📥 Export Report as PDF")
 def generate_pdf():
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
 
-    # Title
+     # Add BMSIT&M Logo at top-left corner (adjust path and size as needed)
+    logo_path = "bmsit_logo.png"  # <-- Make sure this path is correct and image is available
+    pdf.image(logo_path, x=10, y=8, w=30)
+
+    # Heading next to logo
+    pdf.set_font("Arial", 'B', 14)
+    pdf.set_xy(45, 10)
+    pdf.multi_cell(0, 10, "FYP2025 | INITIATIVE BY STUDENTS OF BMSIT&M", align='L')
+    
+    # Title centered below
+    pdf.ln(20)
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(0, 10, "Parkinson's Disease Prediction Report", ln=True, align='C')
     pdf.ln(10)
+
+    pdf.set_font("Arial", size=12)
+
 
     # Patient Info
     pdf.set_font("Arial", 'B', 14)
@@ -269,6 +281,19 @@ def generate_pdf():
         img_path = "right_hand_temp.jpg"
         right_hand_img.convert("RGB").save(img_path)
         pdf.image(img_path, w=100)
+    
+    # Doctor Contact Details
+    pdf.ln(10)
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Doctor Contact - Details", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, "Dr. Rakesh Kumar N, BAMS, MD(Dravyaguna)", ln=True)
+    pdf.cell(0, 10, "Phone: +91-9611206680", ln=True)
+
+    # Thank You Message
+    pdf.ln(10)
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Thank You! We Help to Heal", ln=True, align='C')
 
     return pdf.output(dest="S").encode("latin1")
 
