@@ -1209,22 +1209,18 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("""
     <div style="background-color: rgba(100, 181, 246, 0.1); padding: 1rem; border-radius: 8px; border-left: 3px solid #64B5F6; height: 100%;">
-        <h5 style="color: #64B5F6;">Dr. Rajesh Kumar</h5>
-        <p>Neurologist, Movement Disorders Specialist<br>
-        📞 +91 9876543210<br>
-        📧 dr.rajesh@example.com<br>
-        🏥 City Neurology Center, 2nd Floor</p>
+        <h5 style="color: #64B5F6;">Dr. Rakesh Kumar N</h5>
+        <p>BAMS, MD(Dravyaguna)<br>
+        📞 +91 9611206680<br>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown("""
     <div style="background-color: rgba(100, 181, 246, 0.1); padding: 1rem; border-radius: 8px; border-left: 3px solid #64B5F6; height: 100%;">
-        <h5 style="color: #64B5F6;">Dr. Priya Sharma</h5>
-        <p>Parkinson's Disease Specialist<br>
-        📞 +91 9876543211<br>
-        📧 dr.priya@example.com<br>
-        🏥 Movement Disorders Clinic, Main Street</p>
+        <h5 style="color: #64B5F6;">Dr. Zankhana M Buch</h5>
+        <p>BAMS, MD(Kayachikitsa)<br>
+        📞 +91 9611206680<br>
     </div>
     """, unsafe_allow_html=True)
 
