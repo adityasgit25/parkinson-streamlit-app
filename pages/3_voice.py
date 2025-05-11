@@ -499,6 +499,10 @@ if uploaded_file is not None:
         # Extract features
         with st.spinner("Extracting features from audio..."):
             features = extract_features(tmp_file_path)
+        
+        # Store features in session state
+        st.session_state["voice_features"] = dict(zip(feature_names, features))
+
 
         # Prepare features for prediction
         features_df = pd.DataFrame([features], columns=feature_names)
