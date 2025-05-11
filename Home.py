@@ -1046,6 +1046,7 @@ with st.sidebar:
     st.markdown(nav_page("gait", icon="🚶", active=(current_page=="gait")), unsafe_allow_html=True)
     st.markdown(nav_page("report", icon="📊", active=(current_page=="report")), unsafe_allow_html=True)
     st.markdown(nav_page("game", icon="🎮", active=(current_page=="game")), unsafe_allow_html=True)
+    st.markdown(nav_page("project_details", icon="📄", active=(current_page=="project_details")), unsafe_allow_html=True)
     
     st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
