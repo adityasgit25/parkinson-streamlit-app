@@ -410,6 +410,8 @@ import joblib
 from keras.preprocessing import image
 import numpy as np
 from PIL import Image
+import cv2
+from skimage.metrics import structural_similarity as ssim
 
 # Page configuration
 st.set_page_config(page_title="Spiral Analysis", page_icon="🌀", layout="wide")
@@ -449,6 +451,18 @@ def load_reference_spiral():
         return Image.open("reference_spiral.jpeg")
     except:
         return None
+    
+def calculate_ssim_tremor(user_img: Image.Image, ref_img: Image.Image) -> float:
+    # Resize and convert to grayscale
+    user_gray = cv2.cvtColor(np.array(user_img.resize((210, 210))), cv2.COLOR_RGB2GRAY)
+    ref_gray = cv2.cvtColor(np.array(ref_img.resize((210, 210))), cv2.COLOR_RGB2GRAY)
+
+    # Compute SSIM between user and reference
+    score, _ = ssim(user_gray, ref_gray, full=True)
+
+    # Invert SSIM to express as tremor deviation
+    tremor_percent = (1 - score) * 100
+    return round(tremor_percent, 2), round(score * 100, 2)
 
 # Prediction function
 def predict_parkinson(image_file, loaded_model):
@@ -511,6 +525,17 @@ if uploaded_file is not None:
         <p style="font-size: 1.2rem; font-weight: 500;">Prediction: {result_text}</p>
     </div>
     """, unsafe_allow_html=True)
+
+    if reference_spiral:
+        tremor_percent, similarity_score = calculate_ssim_tremor(uploaded_img, reference_spiral)
+        st.markdown(f"""
+        <div class="result-card">
+            <h3>Tremor Analysis (SSIM)</h3>
+            <p style="font-size: 1.1rem;">Structural Similarity: <strong>{similarity_score}%</strong></p>
+            <p style="font-size: 1.1rem;">Estimated Tremor Deviation: <strong>{tremor_percent}%</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.session_state["spiral_tremor_percent"] = tremor_percent
 
     # Store results in session state
     st.session_state["spiral_result"] = result_text
