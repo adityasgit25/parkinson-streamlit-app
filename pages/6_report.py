@@ -65,6 +65,13 @@ if spiral_img:
     st.subheader("🌀 Spiral Drawing")
     st.image(spiral_img, caption="Uploaded Spiral Drawing", use_column_width=True)
 
+spiral_tremor_percent = st.session_state.get("spiral_tremor_percent")
+if spiral_tremor_percent is not None:
+    st.write(f"**Spiral Tremor Severity:** {spiral_tremor_percent:.2f}%")
+else:
+    st.write("**Spiral Tremor Severity:** Not Available")
+
+
 # Show wave image if available
 wave_img = get_wave_image_from_session()
 if wave_img:
@@ -176,6 +183,14 @@ def generate_pdf():
     for test, key in test_display_mapping.items():
         result = st.session_state.get(key, "Not Available")
         pdf.cell(0, 10, f"{test} Test: {result}", ln=True)
+    
+    # Spiral Drawing Details
+    spiral_tremor_percent = st.session_state.get("spiral_tremor_percent")
+    if spiral_tremor_percent is not None:
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 10, "Spiral Drawing Details", ln=True)
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, f"Spiral Tremor Severity: {spiral_tremor_percent:.2f}%", ln=True)
 
         # Voice Test Results
     voice_result = st.session_state.get("voice_result", "Not Available")
@@ -295,7 +310,9 @@ def generate_pdf():
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Thank You! We Help to Heal", ln=True, align='C')
 
-    return pdf.output(dest="S").encode("latin1")
+    # return pdf.output(dest="S").encode("latin1")
+    return pdf.output(dest="S").encode("latin-1", errors="replace")
+
 
 # Download button
 pdf_bytes = generate_pdf()
