@@ -314,147 +314,345 @@ st.subheader("📥 Export Report as PDF")
 #     return pdf.output(dest="S").encode("latin-1", errors="replace")
 
 
+# def generate_pdf():
+#     def safe_text(text):
+#         return str(text).encode("latin-1", errors="replace").decode("latin-1")
+
+#     pdf = FPDF()
+#     pdf.add_page()
+
+#     # Add BMSIT&M Logo
+#     logo_path = "bmsit_logo.png"
+#     pdf.image(logo_path, x=10, y=8, w=30)
+
+#     # Header
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.set_xy(45, 10)
+#     pdf.multi_cell(0, 10, safe_text("FYP2025 | INITIATIVE BY STUDENTS OF BMSIT&M"), align='L')
+    
+#     pdf.ln(20)
+#     pdf.set_font("Arial", 'B', 16)
+#     pdf.cell(0, 10, safe_text("Parkinson's Disease Prediction Report"), ln=True, align='C')
+#     pdf.ln(10)
+
+#     pdf.set_font("Arial", size=12)
+
+#     # Patient Info
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("Patient Information"), ln=True)
+#     pdf.set_font("Arial", size=12)
+#     for key, val in patient_info.items():
+#         pdf.cell(0, 10, safe_text(f"{key}: {val}"), ln=True)
+#     pdf.ln(5)
+
+#     # Test Results
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("Test Results"), ln=True)
+#     pdf.set_font("Arial", size=12)
+#     for test, key in test_display_mapping.items():
+#         result = st.session_state.get(key, "Not Available")
+#         pdf.cell(0, 10, safe_text(f"{test} Test: {result}"), ln=True)
+
+#     # Spiral Drawing
+#     spiral_tremor_percent = st.session_state.get("spiral_tremor_percent")
+#     if spiral_tremor_percent is not None:
+#         pdf.set_font("Arial", 'B', 14)
+#         pdf.cell(0, 10, safe_text("Spiral Drawing Details"), ln=True)
+#         pdf.set_font("Arial", size=12)
+#         pdf.cell(0, 10, safe_text(f"Spiral Tremor Severity: {spiral_tremor_percent:.2f}%"), ln=True)
+
+#     # Voice
+#     voice_result = st.session_state.get("voice_result", "Not Available")
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("Voice Test Results"), ln=True)
+#     pdf.set_font("Arial", size=12)
+#     pdf.cell(0, 10, safe_text(f"Voice Test Result: {voice_result}"), ln=True)
+
+#     voice_features = st.session_state.get("voice_features")
+#     if isinstance(voice_features, dict) and voice_features:
+#         pdf.cell(0, 10, safe_text("Voice Features:"), ln=True)
+#         for key, value in voice_features.items():
+#             pdf.cell(0, 10, safe_text(f"{key}: {value}"), ln=True)
+#     else:
+#         pdf.cell(0, 10, safe_text("Voice features not available."), ln=True)
+#     pdf.ln(5)
+
+#     # ECG
+#     ecg_result = st.session_state.get("ecg_result", "Not Available")
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("ECG Test Results"), ln=True)
+#     pdf.set_font("Arial", size=12)
+#     pdf.cell(0, 10, safe_text(f"ECG Test Result: {ecg_result}"), ln=True)
+
+#     if ecg_img1:
+#         pdf.ln(5)
+#         img_path = "ecg_img1_temp.jpg"
+#         ecg_img1.convert("RGB").save(img_path)
+#         pdf.image(img_path, w=100)
+#     if ecg_img2:
+#         pdf.ln(5)
+#         img_path = "ecg_img2_temp.jpg"
+#         ecg_img2.convert("RGB").save(img_path)
+#         pdf.image(img_path, w=100)
+
+#     ecg_data = st.session_state.get("ecg_input_data", "Not Available")
+#     if isinstance(ecg_data, dict):
+#         for key, value in ecg_data.items():
+#             pdf.cell(0, 10, safe_text(f"{key}: {value}"), ln=True)
+#     else:
+#         pdf.cell(0, 10, safe_text("ECG Data: Not Available"), ln=True)
+#     pdf.ln(5)
+
+#     # Gait
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("Gait Test Details"), ln=True)
+#     pdf.set_font("Arial", size=12)
+#     left_result = st.session_state.get("gait_chest_result", "Not Available")
+#     right_result = st.session_state.get("gait_hand_result", "Not Available")
+#     pdf.cell(0, 10, safe_text(f"Left Hand Gait Prediction: {left_result}"), ln=True)
+#     pdf.cell(0, 10, safe_text(f"Right Hand Gait Prediction: {right_result}"), ln=True)
+#     pdf.ln(5)
+
+#     pdf.set_font("Arial", 'I', 10)
+#     pdf.cell(0, 10, safe_text(f"Generated on: {date_str}"), ln=True)
+
+#     # Spiral Image
+#     if spiral_img:
+#         pdf.ln(5)
+#         img_path = "spiral_temp.jpg"
+#         spiral_img.convert("RGB").save(img_path)
+#         pdf.image(img_path, w=100)
+
+#     if wave_img:
+#         pdf.ln(5)
+#         img_path = "wave_temp.jpg"
+#         wave_img.convert("RGB").save(img_path)
+#         pdf.image(img_path, w=100)
+
+#     if left_hand_img:
+#         pdf.ln(5)
+#         img_path = "left_hand_temp.jpg"
+#         left_hand_img.convert("RGB").save(img_path)
+#         pdf.image(img_path, w=100)
+
+#     if right_hand_img:
+#         pdf.ln(5)
+#         img_path = "right_hand_temp.jpg"
+#         right_hand_img.convert("RGB").save(img_path)
+#         pdf.image(img_path, w=100)
+
+#     # Doctor Info
+#     pdf.ln(10)
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("Doctor Contact - Details"), ln=True)
+#     pdf.set_font("Arial", size=12)
+#     pdf.cell(0, 10, safe_text("Dr. Rakesh Kumar N, BAMS, MD(Dravyaguna)"), ln=True)
+#     pdf.cell(0, 10, safe_text("Phone: +91-9611206680"), ln=True)
+
+#     pdf.ln(10)
+#     pdf.set_font("Arial", 'B', 14)
+#     pdf.cell(0, 10, safe_text("Thank You! We Help to Heal"), ln=True, align='C')
+
+#     return pdf.output(dest="S").encode("latin-1", errors="replace")
+
+
+# This looks more professional
 def generate_pdf():
     def safe_text(text):
+        """Ensure text is compatible with PDF encoding"""
         return str(text).encode("latin-1", errors="replace").decode("latin-1")
-
-    pdf = FPDF()
-    pdf.add_page()
-
-    # Add BMSIT&M Logo
-    logo_path = "bmsit_logo.png"
-    pdf.image(logo_path, x=10, y=8, w=30)
-
-    # Header
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_xy(45, 10)
-    pdf.multi_cell(0, 10, safe_text("FYP2025 | INITIATIVE BY STUDENTS OF BMSIT&M"), align='L')
     
-    pdf.ln(20)
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, safe_text("Parkinson's Disease Prediction Report"), ln=True, align='C')
+    # Initialize PDF with standard A4 format
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.add_page()
+    
+    # Set document properties
+    pdf.set_title("Parkinson's Disease Assessment Report")
+    pdf.set_author("BMSIT&M FYP2025 Team")
+    pdf.set_creator("BMSIT&M Parkinson's Disease Assessment System")
+    
+    # Add header with logo
+    logo_path = "bmsit_logo.png"
+    pdf.image(logo_path, x=10, y=8, w=25)
+    
+    # Institution header
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_xy(40, 10)
+    pdf.cell(0, 6, safe_text("BMS Institute of Technology and Management"), 0, 1, 'L')
+    pdf.set_xy(40, 16)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 6, safe_text("FYP2025 | Student Research Initiative"), 0, 1, 'L')
+    
+    # Add horizontal separator
+    pdf.line(10, 25, 200, 25)
+    
+    # Report title
     pdf.ln(10)
-
-    pdf.set_font("Arial", size=12)
-
-    # Patient Info
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("Patient Information"), ln=True)
-    pdf.set_font("Arial", size=12)
-    for key, val in patient_info.items():
-        pdf.cell(0, 10, safe_text(f"{key}: {val}"), ln=True)
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, safe_text("Parkinson's Disease Assessment Report"), 0, 1, 'C')
     pdf.ln(5)
-
-    # Test Results
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("Test Results"), ln=True)
-    pdf.set_font("Arial", size=12)
+    
+    # Patient information section
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("Patient Information"), 0, 1, 'L', True)
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", '', 10)
+    for key, val in patient_info.items():
+        pdf.cell(40, 8, safe_text(f"{key}:"), 0, 0)
+        pdf.cell(0, 8, safe_text(f"{val}"), 0, 1)
+    pdf.ln(5)
+    
+    # Test results section
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("Assessment Results"), 0, 1, 'L', True)
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", '', 10)
     for test, key in test_display_mapping.items():
         result = st.session_state.get(key, "Not Available")
-        pdf.cell(0, 10, safe_text(f"{test} Test: {result}"), ln=True)
-
-    # Spiral Drawing
+        pdf.cell(60, 8, safe_text(f"{test} Test:"), 0, 0)
+        pdf.cell(0, 8, safe_text(f"{result}"), 0, 1)
+    pdf.ln(5)
+    
+    # Spiral drawing analysis
     spiral_tremor_percent = st.session_state.get("spiral_tremor_percent")
     if spiral_tremor_percent is not None:
-        pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 10, safe_text("Spiral Drawing Details"), ln=True)
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, safe_text(f"Spiral Tremor Severity: {spiral_tremor_percent:.2f}%"), ln=True)
-
-    # Voice
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 8, safe_text("Spiral Drawing Analysis"), 0, 1, 'L', True)
+        pdf.ln(2)
+        
+        pdf.set_font("Arial", '', 10)
+        pdf.cell(60, 8, safe_text("Tremor Severity:"), 0, 0)
+        pdf.cell(0, 8, safe_text(f"{spiral_tremor_percent:.2f}%"), 0, 1)
+        
+        # Add spiral image if available
+        if spiral_img:
+            pdf.ln(3)
+            img_path = "spiral_temp.jpg"
+            spiral_img.convert("RGB").save(img_path)
+            pdf.cell(60, 8, safe_text("Spiral Drawing Sample:"), 0, 1)
+            pdf.image(img_path, x=15, w=80)
+            
+        if wave_img:
+            pdf.ln(3)
+            img_path = "wave_temp.jpg"
+            wave_img.convert("RGB").save(img_path)
+            pdf.cell(60, 8, safe_text("Wave Drawing Sample:"), 0, 1)
+            pdf.image(img_path, x=15, w=80)
+        pdf.ln(5)
+    
+    # Voice analysis section
     voice_result = st.session_state.get("voice_result", "Not Available")
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("Voice Test Results"), ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, safe_text(f"Voice Test Result: {voice_result}"), ln=True)
-
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("Voice Analysis"), 0, 1, 'L', True)
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(60, 8, safe_text("Voice Assessment Result:"), 0, 0)
+    pdf.cell(0, 8, safe_text(f"{voice_result}"), 0, 1)
+    
     voice_features = st.session_state.get("voice_features")
     if isinstance(voice_features, dict) and voice_features:
-        pdf.cell(0, 10, safe_text("Voice Features:"), ln=True)
+        pdf.ln(2)
+        pdf.cell(0, 8, safe_text("Voice Acoustic Features:"), 0, 1)
+        
+        # Create a table for voice features
         for key, value in voice_features.items():
-            pdf.cell(0, 10, safe_text(f"{key}: {value}"), ln=True)
-    else:
-        pdf.cell(0, 10, safe_text("Voice features not available."), ln=True)
+            pdf.cell(80, 6, safe_text(f"{key}"), 'L', 0)
+            pdf.cell(0, 6, safe_text(f"{value}"), 'R', 1)
     pdf.ln(5)
-
-    # ECG
+    
+    # ECG analysis section
     ecg_result = st.session_state.get("ecg_result", "Not Available")
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("ECG Test Results"), ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, safe_text(f"ECG Test Result: {ecg_result}"), ln=True)
-
-    if ecg_img1:
-        pdf.ln(5)
-        img_path = "ecg_img1_temp.jpg"
-        ecg_img1.convert("RGB").save(img_path)
-        pdf.image(img_path, w=100)
-    if ecg_img2:
-        pdf.ln(5)
-        img_path = "ecg_img2_temp.jpg"
-        ecg_img2.convert("RGB").save(img_path)
-        pdf.image(img_path, w=100)
-
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("ECG Analysis"), 0, 1, 'L', True)
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(60, 8, safe_text("ECG Assessment Result:"), 0, 0)
+    pdf.cell(0, 8, safe_text(f"{ecg_result}"), 0, 1)
+    
+    # ECG data parameters
     ecg_data = st.session_state.get("ecg_input_data", "Not Available")
     if isinstance(ecg_data, dict):
+        pdf.ln(2)
+        pdf.cell(0, 8, safe_text("ECG Parameters:"), 0, 1)
         for key, value in ecg_data.items():
-            pdf.cell(0, 10, safe_text(f"{key}: {value}"), ln=True)
-    else:
-        pdf.cell(0, 10, safe_text("ECG Data: Not Available"), ln=True)
+            pdf.cell(80, 6, safe_text(f"{key}"), 'L', 0)
+            pdf.cell(0, 6, safe_text(f"{value}"), 'R', 1)
+    
+    # ECG images
+    if ecg_img1:
+        pdf.ln(3)
+        img_path = "ecg_img1_temp.jpg"
+        ecg_img1.convert("RGB").save(img_path)
+        pdf.cell(60, 8, safe_text("ECG Visualization 1:"), 0, 1)
+        pdf.image(img_path, x=15, w=100)
+        
+    if ecg_img2:
+        pdf.ln(3)
+        img_path = "ecg_img2_temp.jpg"
+        ecg_img2.convert("RGB").save(img_path)
+        pdf.cell(60, 8, safe_text("ECG Visualization 2:"), 0, 1)
+        pdf.image(img_path, x=15, w=100)
     pdf.ln(5)
-
-    # Gait
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("Gait Test Details"), ln=True)
-    pdf.set_font("Arial", size=12)
+    
+    # Gait analysis section
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("Gait Analysis"), 0, 1, 'L', True)
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", '', 10)
     left_result = st.session_state.get("gait_chest_result", "Not Available")
     right_result = st.session_state.get("gait_hand_result", "Not Available")
-    pdf.cell(0, 10, safe_text(f"Left Hand Gait Prediction: {left_result}"), ln=True)
-    pdf.cell(0, 10, safe_text(f"Right Hand Gait Prediction: {right_result}"), ln=True)
-    pdf.ln(5)
-
-    pdf.set_font("Arial", 'I', 10)
-    pdf.cell(0, 10, safe_text(f"Generated on: {date_str}"), ln=True)
-
-    # Spiral Image
-    if spiral_img:
-        pdf.ln(5)
-        img_path = "spiral_temp.jpg"
-        spiral_img.convert("RGB").save(img_path)
-        pdf.image(img_path, w=100)
-
-    if wave_img:
-        pdf.ln(5)
-        img_path = "wave_temp.jpg"
-        wave_img.convert("RGB").save(img_path)
-        pdf.image(img_path, w=100)
-
+    pdf.cell(60, 8, safe_text("Left Hand Gait Assessment:"), 0, 0)
+    pdf.cell(0, 8, safe_text(f"{left_result}"), 0, 1)
+    pdf.cell(60, 8, safe_text("Right Hand Gait Assessment:"), 0, 0)
+    pdf.cell(0, 8, safe_text(f"{right_result}"), 0, 1)
+    
+    # Gait images
     if left_hand_img:
-        pdf.ln(5)
+        pdf.ln(3)
         img_path = "left_hand_temp.jpg"
         left_hand_img.convert("RGB").save(img_path)
-        pdf.image(img_path, w=100)
-
+        pdf.cell(60, 8, safe_text("Left Hand Movement Sample:"), 0, 1)
+        pdf.image(img_path, x=15, w=80)
+        
     if right_hand_img:
-        pdf.ln(5)
+        pdf.ln(3)
         img_path = "right_hand_temp.jpg"
         right_hand_img.convert("RGB").save(img_path)
-        pdf.image(img_path, w=100)
-
-    # Doctor Info
+        pdf.cell(60, 8, safe_text("Right Hand Movement Sample:"), 0, 1)
+        pdf.image(img_path, x=15, w=80)
     pdf.ln(10)
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("Doctor Contact - Details"), ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, safe_text("Dr. Rakesh Kumar N, BAMS, MD(Dravyaguna)"), ln=True)
-    pdf.cell(0, 10, safe_text("Phone: +91-9611206680"), ln=True)
-
+    
+    # Add footer with doctor contact details
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("Medical Professional Contact"), 0, 1, 'L', True)
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 6, safe_text("Dr. Rakesh Kumar N, BAMS, MD(Dravyaguna)"), 0, 1)
+    pdf.cell(0, 6, safe_text("Phone: +91-9611206680"), 0, 1)
+    
+    # Generation date
     pdf.ln(10)
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, safe_text("Thank You! We Help to Heal"), ln=True, align='C')
-
+    pdf.set_font("Arial", 'I', 8)
+    pdf.cell(0, 6, safe_text(f"Report generated on: {date_str}"), 0, 1)
+    
+    # Disclaimer
+    pdf.ln(5)
+    pdf.set_font("Arial", 'I', 8)
+    pdf.multi_cell(0, 4, safe_text("Disclaimer: This assessment is provided for informational purposes only and does not constitute a medical diagnosis. Please consult with a qualified healthcare professional for proper diagnosis and treatment."), 0, 'L')
+    
+    # Final message
+    pdf.ln(10)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, safe_text("BMSIT&M - We Help to Heal"), 0, 1, 'C')
+    
     return pdf.output(dest="S").encode("latin-1", errors="replace")
-
 
 # Download button
 pdf_bytes = generate_pdf()
