@@ -109,6 +109,7 @@ import numpy as np
 import joblib
 from PIL import Image
 import io
+import openpyxl
 
 # ECG parameter names
 ECG_PARAM_NAMES = [
@@ -129,11 +130,34 @@ This application predicts whether a patient has Parkinson's disease based on ECG
 Please enter the required 8 values and upload two images for analysis. Results and images will be displayed below.
 """)
 
+# Excel file upload
+st.subheader("Upload Excel File (Optional)")
+excel_file = st.file_uploader("Upload Excel (.xlsx) file with ECG data", type=["xlsx"])
+
+autofill_string = ""
+
+# Process uploaded Excel file
+if excel_file:
+    try:
+        wb = openpyxl.load_workbook(excel_file)
+        ws = wb.active
+        autofill_string = ws["O2"].value
+        if autofill_string:
+            st.info(f"Auto-filled ECG Parameters from Excel (B2): {autofill_string}")
+        else:
+            st.warning("Cell B2 is empty. Please ensure it contains the ECG data.")
+    except Exception as e:
+        st.error(f"Error reading Excel file: {e}")
+
+
 st.header("Input ECG Parameters")
 st.write("Enter the following 8 values separated by commas in this order: QRS_duration, PR_interval, QT_interval, T_interval, Heart_Rate, HRV, SPO2, Temperature")
 
-# Text input for comma-separated values
-input_string = st.text_input("Enter values (comma-separated):", "")
+# # Text input for comma-separated values
+# input_string = st.text_input("Enter values (comma-separated):", "")
+
+# Input text field with auto-filled value from Excel
+input_string = st.text_input("Enter values (comma-separated):", value=autofill_string)
 
 # Image upload section
 st.header("Upload Images")

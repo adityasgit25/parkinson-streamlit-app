@@ -456,7 +456,7 @@ st.subheader("📥 Export Report as PDF")
 #     return pdf.output(dest="S").encode("latin-1", errors="replace")
 
 
-# This looks more professional
+# This looks more professional, switch to previous version if it breaks
 def generate_pdf():
     def safe_text(text):
         """Ensure text is compatible with PDF encoding"""

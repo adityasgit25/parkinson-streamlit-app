@@ -64,10 +64,22 @@ import joblib
 import numpy as np
 from PIL import Image
 import io
+from openpyxl import load_workbook
 
 # Load models
 chest_model = joblib.load("AB_Gait_Chest.joblib")
 hand_model = joblib.load("AB_Gait_Hand.joblib")
+
+
+# Extract a specific cell using openpyxl
+def extract_cell_value(file, cell_address):
+    try:
+        wb = load_workbook(filename=file, read_only=True)
+        ws = wb.active
+        value = ws[cell_address].value
+        return str(value)
+    except Exception as e:
+        return None
 
 # Function to preprocess input
 def parse_input(input_str):
@@ -106,8 +118,25 @@ st.title("Gait Analysis for Parkinson Detection")
 st.markdown("This app analyzes gait data from **Left Hand** and **Right Hand** sensors to detect Parkinson's Disease.")
 
 # --- Left Hand Section ---
-st.header("📍 Left Hand Gait Data")
-chest_input = st.text_area("Enter 300 comma-separated values for left hand sensor:")
+st.header("📍 Left Hand Gait Data") 
+
+## refer chest as left hand (VV imp)
+left_excel = st.file_uploader("Upload Left Hand Excel File (.xlsx)", type=["xlsx"], key="left_xlsx")
+left_cell = "I2"
+
+chest_input = ""
+if left_excel and left_cell:
+    extracted = extract_cell_value(left_excel, left_cell)
+    if extracted:
+        chest_input = extracted
+        st.success("✅ Data extracted from cell.")
+    else:
+        st.error("❌ Could not extract from specified cell.")
+
+chest_input = st.text_area("Comma-separated 300 values (Left Hand) for left hand sensor", value=chest_input, height=150)
+
+# chest_input = st.text_area("Enter 300 comma-separated values for left hand sensor:")
+
 
 # Left Hand Image Upload
 st.subheader("Upload Left Hand Plot")
@@ -138,7 +167,22 @@ st.markdown("---")
 
 # --- Right Hand Section ---
 st.header("📍 Right Hand Gait Data")
-hand_input = st.text_area("Enter 300 comma-separated values for right hand sensor:")
+## refer hand as right hand (VV imp)
+
+right_excel = st.file_uploader("Upload Right Hand Excel File (.xlsx)", type=["xlsx"], key="right_xlsx")
+right_cell = "I2"
+
+hand_input = ""
+if right_excel and right_cell:
+    extracted = extract_cell_value(right_excel, right_cell)
+    if extracted:
+        hand_input = extracted
+        st.success("✅ Data extracted from cell.")
+    else:
+        st.error("❌ Could not extract from specified cell.")
+
+hand_input = st.text_area("Comma-separated 300 values (Right Hand)", value=hand_input, height=150)
+# hand_input = st.text_area("Enter 300 comma-separated values for right hand sensor:")
 
 # Right Hand Image Upload
 st.subheader("Upload Right Hand Plot")
@@ -161,6 +205,6 @@ if st.button("Analyze Right Hand"):
         result = "🟢 Healthy" if prediction == 0 else "🔴 Parkinson"
         st.success(f"**Right Hand Gait Prediction:** {result}")
 
-        # Save to session
+        # Save to session   
         st.session_state["gait_hand_result"] = result
         st.session_state["gait_hand_data"] = hand_array
