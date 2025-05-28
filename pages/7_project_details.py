@@ -164,6 +164,8 @@ st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('<div class="section-header">Project Video</div>', unsafe_allow_html=True)
 st.markdown("""
 <div class="content-card">
-<span class="video-link">[Project video will be uploaded here soon]</span>
+<a class="video-link" href="https://drive.google.com/file/d/1Dg58VXiHe8I0aBMitBTLPP4HzjLewst1/view" target="_blank">▶️ Watch Project Video on Google Drive</a>
 </div>
 """, unsafe_allow_html=True)
+
+
